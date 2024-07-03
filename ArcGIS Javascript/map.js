@@ -30,58 +30,94 @@ require([
         return value === null || value === undefined || value === "" ? "N/A" : value;
     }
 
+    // Function to add features to the graphics layer
+    function addFeatures(data, markerSymbol, popupTemplate, siteNameField) {
+        for (var feature of data.features) {
+            var siteName = feature.properties[siteNameField];
+
+            // Filter for site subtype and non-null/non-blank site name
+            if (siteName) {
+                var location = {
+                    type: "point",
+                    longitude: feature.geometry.coordinates[0],
+                    latitude: feature.geometry.coordinates[1]
+                };
+
+                var popup_attributes = feature.properties;
+
+                var graphic = new Graphic({
+                    geometry: location,
+                    symbol: markerSymbol,
+                    attributes: popup_attributes,
+                    popupTemplate: popupTemplate
+                });
+                graphicsLayer.add(graphic);
+            }
+        }
+    }
+
+    // USGS Data
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
             var data = JSON.parse(this.responseText);
-            for (var feature of data.features) {
-                var siteName = feature.properties.PUBLIC_SITE_NAME;
 
-                // Filter for site subtype and non-null/non-blank site name
-                if (["CAMPING AREA", "CAMPGROUND"].includes(feature.properties.SITE_SUBTYPE) && siteName) {
+            var markerSymbol1 = new SimpleMarkerSymbol({
+                color: "blue", // Fill color
+                size: 5, // Size in points
+                outline: { // Outline properties
+                    color: "white",
+                    width: 0.5
+                },
+                style: "circle" // Options: "circle", "square", "cross", "x", "diamond", "triangle"
+            });
 
-                    var location = {
-                        type: "point",
-                        longitude: feature.geometry.coordinates[0],
-                        latitude: feature.geometry.coordinates[1]
-                    };
+            var popupTemplate1 = {
+                title: "Site Information",
+                content: `<b>Site Name</b>: ${checkNull('{PUBLIC_SITE_NAME}')} <br> 
+                          <b>Subtype</b>: ${checkNull('{SITE_SUBTYPE}')} <br> 
+                          <b>State</b>: ${checkNull('{ADDRESS_STATE}')} <br>
+                          <b>Recreation Information</b>: ${checkNull('{RECAREA_DESCRIPTION}')} <br>
+                          <b>Water</b>: ${checkNull('{WATER_AVAILABILITY}')} <br>
+                          <b>Activity Types</b>: ${checkNull('{ACTIVITY_TYPES}')} <br>`
+            };
 
-                    var marker = new SimpleMarkerSymbol({
-                        color: "blue", // Fill color
-                        size: 5, // Size in points
-                        outline: { // Outline properties
-                            color: "white",
-                            width: 0.5
-                        },
-                        style: "circle" // Options: "circle", "square", "cross", "x", "diamond", "triangle"
-                    });
-
-                    var popup_attributes = feature.properties;
-
-                    var popup_template = {
-                        title: "Site Information",
-                        content: `<b>Site Name</b>: ${checkNull(feature.properties.PUBLIC_SITE_NAME)} <br> 
-                                  <b>Subtype</b>: ${checkNull(feature.properties.SITE_SUBTYPE)} <br> 
-                                  <b>State</b>: ${checkNull(feature.properties.ADDRESS_STATE)} <br>
-                                  <b>Recreation Information</b>: ${checkNull(feature.properties.RECAREA_DESCRIPTION)} <br>
-                                  <b>Water</b>: ${checkNull(feature.properties.WATER_AVAILABILITY)} <br>
-                                  <b>Activity Types</b>: ${checkNull(feature.properties.ACTIVITY_TYPES)} <br>`
-                    };
-
-                    var graphic = new Graphic({
-                        geometry: location,
-                        symbol: marker,
-                        attributes: popup_attributes,
-                        popupTemplate: popup_template
-                    });
-                    graphicsLayer.add(graphic);
-                }
-            }
+            addFeatures(data, markerSymbol1, popupTemplate1, "PUBLIC_SITE_NAME");
         }
     };
 
     xmlhttp.open("GET", "https://apps.fs.usda.gov/arcx/rest/services/EDW/EDW_InfraRecreationSites_01/MapServer/0/query?outFields=*&where=1%3D1&f=geojson", true);
     xmlhttp.send();
+
+    // // data.gov data
+    var xmlhttp2 = new XMLHttpRequest();
+    xmlhttp2.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+            var data = JSON.parse(this.responseText);
+
+            var markerSymbol2 = new SimpleMarkerSymbol({
+                color: "red", // Fill color
+                size: 4, // Size in points
+                outline: { // Outline properties
+                    color: "black",
+                    width: 1
+                },
+                style: "diamond" // Options: "circle", "square", "cross", "x", "diamond", "triangle"
+            });
+
+            var popupTemplate2 = {
+                title: "Additional Site Information",
+                content: `<b>Site</b>: ${checkNull('{FET_NAME}')} <br> 
+                          <b>Description</b>: ${checkNull('{DESCRIPTION}')} <br> 
+                          <b>Picture</b>: ${checkNull('{PHOTO_THUMB}')}`
+            };
+
+            addFeatures(data, markerSymbol2, popupTemplate2, "FET_NAME");
+        }
+    };
+
+    xmlhttp2.open("GET", "https://services1.arcgis.com/KbxwQRRfWyEYLgp4/arcgis/rest/services/BLM_National_Recreation_Site_Points/FeatureServer/1/query?outFields=*&where=1%3D1&f=geojson", true);
+    xmlhttp2.send();
 
     myView.popup.defaultPopupTemplateEnabled = true;
 

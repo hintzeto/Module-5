@@ -78,7 +78,8 @@ Note that `IM` stands for Individual Module and `TP` stands for Team Project.
 | 6/25/24  |  1:24    |   IM   | Finding geojson files and researching      |    1:03     |
 | 7/1/24   |  6:20    |   IM   | Implementing new data and popup format     |    1:17     |
 | 7/2/24   |  4:44    |   IM   | Making things more pretty and adding data  |    3:14     |
-|          |          |        |                                            |             |
+| 7/2/24   |  9:21    |   TP   | Creating master template for html          |    1:28     |
+| 7/3/24   |  4:18    |   TP   | Creating links to details for each user    |    1:36     |
 
 _Note: Add more rows as needed._
 
